@@ -27,12 +27,12 @@ new_db.write(new_flows)
 
 ### Second, create the method and add the new charaterisation flows
 new_cfs = parse_node_ids_and_cfs('tests/fixtures/sample_medical_substances.csv')
-new_method = bd.Method('usetox_extensions')
+new_method = bd.Method(('additional method', 'usetox_extensions', 'cat1', 'cat2'))
 new_method.register()
 new_method.write(new_cfs)
 
 ### Verification that it work can be done with:
-new_method = bd.Method('usetox_extensions')
+new_method = bd.Method(('additional method', 'usetox_extensions', 'cat1', 'cat2'))
 new_method.load()
 bd.get_node(id=247406338651054080)
 ```
