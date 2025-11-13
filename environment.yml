@@ -1,0 +1,8 @@
+name: add-usetox-cfs
+channels:
+  - conda-forge
+  - cmutel
+dependencies:
+  - python<3.14
+  - brightway25
+
