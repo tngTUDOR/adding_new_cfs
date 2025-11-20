@@ -38,7 +38,7 @@ jobs:
              ubuntu-22.04,
              windows-2019,
              macos-13]
-        py-version: ["3.9", "3.10", "3.11", "3.12"]
+        py-version: ["3.9", "3.10", "3.11", "3.12", "3.13"]
 
     steps:
       - uses: actions/checkout@v5
@@ -57,7 +57,7 @@ jobs:
       # install testing
       - name: Install package and test deps
         run: |
-          pip install .[testing] # install the package and the testing deps
+          pip install pytest pytest-cov bw2data bw2calc bw2io
 
       - name: Test with pytest
         run: |
