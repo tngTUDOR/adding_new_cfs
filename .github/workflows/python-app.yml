@@ -57,7 +57,7 @@ jobs:
       # install testing
       - name: Install package and test deps
         run: |
-          pip install pytest pytest-cov bw2data bw2calc bw2io
+          pip install pytest
 
       - name: Test with pytest
         run: |
