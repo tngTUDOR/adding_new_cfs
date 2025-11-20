@@ -35,7 +35,7 @@ jobs:
         os: [ubuntu-latest,  # 24.04
              windows-latest,  # 2025
              macos-latest,  # 15
-             macos-14
+             macos-14,
              ubuntu-22.04,
              windows-2022]
         py-version: ["3.9", "3.10", "3.11", "3.12", "3.13"]
@@ -57,7 +57,7 @@ jobs:
       # install testing
       - name: Install package and test deps
         run: |
-          pip install pytest
+          pip install pytest bw2data
 
       - name: Test with pytest
         run: |
