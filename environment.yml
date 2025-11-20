@@ -3,6 +3,6 @@ channels:
   - conda-forge
   - cmutel
 dependencies:
-  - python<3.14
+  - python>3.9
   - brightway25
 
