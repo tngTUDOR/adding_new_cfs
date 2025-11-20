@@ -42,8 +42,8 @@ def test_parse_sample_csv(sample_csv_path: Path) -> None:
 
 def test_parse_csv_with_empty_cas_number() -> None:
     """Test parsing CSV with empty CAS number."""
-    csv_content = """new_database,flow_name,code,unit,CAS number,categories,cf
-additional_chemical_flows,Test Substance,test_substance,kg,,water::surface water::freshwater,1.0E-05
+    csv_content = """new_database,flow_name,code,unit,CAS number,categories,type,cf
+additional_chemical_flows,Test Substance,test_substance,kg,,water::surface water::freshwater,emission,1.0E-05
 """
     with tempfile.NamedTemporaryFile(mode="w", suffix=".csv", delete=False) as f:
         f.write(csv_content)
@@ -77,8 +77,8 @@ def test_missing_file() -> None:
 
 def test_missing_required_column() -> None:
     """Test that ValueError is raised when required columns are missing."""
-    csv_content = """new_database,flow_name,code,unit,CAS number,categories
-additional_chemical_flows,Test Substance,test_substance,kg,123-45-6,water::surface water::freshwater
+    csv_content = """new_database,flow_name,code,unit,CAS number,categories,type
+additional_chemical_flows,Test Substance,test_substance,kg,123-45-6,water::surface water::freshwater,emission
 """
     with tempfile.NamedTemporaryFile(mode="w", suffix=".csv", delete=False) as f:
         f.write(csv_content)
@@ -93,8 +93,8 @@ additional_chemical_flows,Test Substance,test_substance,kg,123-45-6,water::surfa
 
 def test_invalid_cf_value() -> None:
     """Test that ValueError is raised for invalid CF values."""
-    csv_content = """new_database,flow_name,code,unit,CAS number,categories,cf
-additional_chemical_flows,Test Substance,test_substance,kg,123-45-6,water::surface water::freshwater,not_a_number
+    csv_content = """new_database,flow_name,code,unit,CAS number,categories,type,cf
+additional_chemical_flows,Test Substance,test_substance,kg,123-45-6,water::surface water::freshwater,emission,not_a_number
 """
     with tempfile.NamedTemporaryFile(mode="w", suffix=".csv", delete=False) as f:
         f.write(csv_content)
@@ -109,8 +109,8 @@ additional_chemical_flows,Test Substance,test_substance,kg,123-45-6,water::surfa
 
 def test_categories_parsing() -> None:
     """Test that categories are correctly parsed into tuples."""
-    csv_content = """new_database,flow_name,code,unit,CAS number,categories,cf
-additional_chemical_flows,Test Substance,test_substance,kg,123-45-6,air::low urban::population,1.0E-05
+    csv_content = """new_database,flow_name,code,unit,CAS number,categories,type,cf
+additional_chemical_flows,Test Substance,test_substance,kg,123-45-6,air::low urban::population,emission,1.0E-05
 """
     with tempfile.NamedTemporaryFile(mode="w", suffix=".csv", delete=False) as f:
         f.write(csv_content)
@@ -125,8 +125,8 @@ additional_chemical_flows,Test Substance,test_substance,kg,123-45-6,air::low urb
 
 def test_categories_with_whitespace() -> None:
     """Test that categories with whitespace are correctly trimmed."""
-    csv_content = """new_database,flow_name,code,unit,CAS number,categories,cf
-additional_chemical_flows,Test Substance,test_substance,kg,123-45-6, air :: low urban :: population ,1.0E-05
+    csv_content = """new_database,flow_name,code,unit,CAS number,categories,type,cf
+additional_chemical_flows,Test Substance,test_substance,kg,123-45-6, air :: low urban :: population ,emission,1.0E-05
 """
     with tempfile.NamedTemporaryFile(mode="w", suffix=".csv", delete=False) as f:
         f.write(csv_content)
@@ -141,9 +141,9 @@ additional_chemical_flows,Test Substance,test_substance,kg,123-45-6, air :: low 
 
 def test_code_sanitization_when_empty() -> None:
     """Test that empty code column uses sanitized flow_name."""
-    csv_content = """new_database,flow_name,code,unit,CAS number,categories,cf
-additional_chemical_flows,Test Substance With Spaces,,kg,123-45-6,water::surface water::freshwater,1.0E-05
-additional_chemical_flows,Another Test,another_test,kg,123-45-6,water::surface water::freshwater,1.0E-05
+    csv_content = """new_database,flow_name,code,unit,CAS number,categories,type,cf
+additional_chemical_flows,Test Substance With Spaces,,kg,123-45-6,water::surface water::freshwater,emission,1.0E-05
+additional_chemical_flows,Another Test,another_test,kg,123-45-6,water::surface water::freshwater,emission,1.0E-05
 """
     with tempfile.NamedTemporaryFile(mode="w", suffix=".csv", delete=False) as f:
         f.write(csv_content)
@@ -164,7 +164,7 @@ def test_all_medical_substances_have_required_fields(sample_csv_path: Path) -> N
     """Test that all parsed medical substances have all required fields."""
     result = parse_new_flows_from_csv(sample_csv_path)
 
-    required_keys = {"database", "name", "code", "unit", "CAS number", "categories", "cf"}
+    required_keys = {"database", "name", "code", "unit", "CAS number", "categories", "type", "cf"}
 
     for substance in result:
         assert set(substance.keys()) == required_keys
@@ -174,5 +174,6 @@ def test_all_medical_substances_have_required_fields(sample_csv_path: Path) -> N
         assert isinstance(substance["unit"], str)
         assert isinstance(substance["CAS number"], str)
         assert isinstance(substance["categories"], tuple)
+        assert isinstance(substance["type"], str)
         assert isinstance(substance["cf"], float)
 
