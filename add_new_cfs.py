@@ -102,7 +102,9 @@ def _parse_cf(raw: str, *, line_number: int) -> float:
     try:
         return float(raw)
     except (TypeError, ValueError) as exc:
-        raise ValueError(f"Row {line_number}: cf column must contain a floating point value.") from exc
+        raise ValueError(
+            f"Row {line_number}: cf column must contain a floating point value."
+        ) from exc
 
 
 def parse_new_flows_from_csv(path: str | Path) -> list[dict[str, object]]:
@@ -116,6 +118,7 @@ def parse_new_flows_from_csv(path: str | Path) -> list[dict[str, object]]:
     - unit: The unit of the flow
     - CAS number: The CAS number (can be empty)
     - categories: Category hierarchy separated by "::" (e.g., "air::low urban::population")
+    - type: The node type. For biosphere flows, use "emission" (for pollutants released to environment) or "natural resource" (for resources extracted from nature). For technosphere processes, use "process".
     - cf: The characterization factor as a floating point value
 
     Examples
@@ -124,11 +127,11 @@ def parse_new_flows_from_csv(path: str | Path) -> list[dict[str, object]]:
 
     .. code-block:: text
 
-        new_database,flow_name,code,unit,CAS number,categories,cf
-        additional_chemical_flows,Acetaminophen,acetaminophen,kg,103-90-2,water::surface water::freshwater,1.23E-05
-        additional_chemical_flows,Ibuprofen,,kg,15687-27-1,water::surface water::freshwater,2.45E-06
-        additional_chemical_flows,Aspirin,aspirin,kg,50-78-2,water::groundwater,3.67E-07
-        additional_chemical_flows,Metformin,,kg,657-24-9,water::surface water::freshwater,4.89E-06
+        new_database,flow_name,code,unit,CAS number,categories,type,cf
+        additional_chemical_flows,Acetaminophen,acetaminophen,kg,103-90-2,water::surface water::freshwater,emission,1.23E-05
+        additional_chemical_flows,Ibuprofen,,kg,15687-27-1,water::surface water::freshwater,emission,2.45E-06
+        additional_chemical_flows,Aspirin,aspirin,kg,50-78-2,water::groundwater,emission,3.67E-07
+        additional_chemical_flows,Metformin,,kg,657-24-9,water::surface water::freshwater,emission,4.89E-06
 
     Parameters
     ----------
@@ -145,6 +148,7 @@ def parse_new_flows_from_csv(path: str | Path) -> list[dict[str, object]]:
         - unit: The unit (from unit column)
         - CAS number: The CAS number (from CAS number column, can be empty string)
         - categories: A tuple of category segments (parsed from categories column)
+        - type: The node type (from type column, e.g., "emission", "natural resource", or "process")
         - cf: The characterization factor as a float (from cf column)
 
     Raises
@@ -166,15 +170,21 @@ def parse_new_flows_from_csv(path: str | Path) -> list[dict[str, object]]:
         "unit",
         "CAS number",
         "categories",
+        "type",
         "cf",
     )
 
     parsed_rows: list[dict[str, object]] = []
 
-    with csv_path.open(newline="", encoding="utf-8") as csv_file:
+    with csv_path.open(newline="", encoding="utf-8-sig") as csv_file:
         reader = csv.DictReader(csv_file)
 
-        missing_columns = [column for column in required_columns if column not in reader.fieldnames]
+        if reader.fieldnames is None:
+            raise ValueError("CSV file appears to be empty or has no header row.")
+
+        missing_columns = [
+            column for column in required_columns if column not in reader.fieldnames
+        ]
         if missing_columns:
             raise ValueError(
                 f"CSV file must contain the following columns: {', '.join(required_columns)}. "
@@ -182,12 +192,25 @@ def parse_new_flows_from_csv(path: str | Path) -> list[dict[str, object]]:
             )
 
         for row_index, row in enumerate(reader, start=2):  # account for header line
-            categories = _parse_categories(row.get("categories", ""), line_number=row_index)
+            categories = _parse_categories(
+                row.get("categories", ""), line_number=row_index
+            )
             cf = _parse_cf(row.get("cf"), line_number=row_index)
-            
+
             flow_name = row.get("flow_name", "").strip()
             code_raw = row.get("code", "").strip()
             code = code_raw if code_raw else _sanitize_code(flow_name)
+            node_type = row.get("type", "").strip()
+            if not node_type:
+                raise ValueError(
+                    f"Row {row_index}: type column is required and cannot be empty."
+                )
+            # Validate that type is one of the valid Brightway25 values
+            valid_types = {"emission", "natural resource", "process"}
+            if node_type not in valid_types:
+                raise ValueError(
+                    f"Row {row_index}: type must be one of {valid_types}, got '{node_type}'."
+                )
 
             parsed_rows.append(
                 {
@@ -197,6 +220,7 @@ def parse_new_flows_from_csv(path: str | Path) -> list[dict[str, object]]:
                     "unit": row.get("unit", "").strip(),
                     "CAS number": (row.get("CAS number") or "").strip(),
                     "categories": categories,
+                    "type": node_type,
                     "cf": cf,
                 }
             )
@@ -212,6 +236,8 @@ def parse_node_ids_and_cfs(path: str | Path) -> list[tuple[int, float]]:
     using name and code, and returns a list of tuples containing (node.id, cf).
 
     The database name is read from the "new_database" column in the CSV file.
+    The CSV file must contain a "type" column to specify the node type.
+    For biosphere flows, use "emission" or "natural resource". For technosphere processes, use "process".
     Requires Brightway25.
 
     Parameters
@@ -243,16 +269,22 @@ def parse_node_ids_and_cfs(path: str | Path) -> list[tuple[int, float]]:
         "unit",
         "CAS number",
         "categories",
+        "type",
         "cf",
     )
 
     node_cf_tuples: list[tuple[int, float]] = []
     database_name: str | None = None
 
-    with csv_path.open(newline="", encoding="utf-8") as csv_file:
+    with csv_path.open(newline="", encoding="utf-8-sig") as csv_file:
         reader = csv.DictReader(csv_file)
 
-        missing_columns = [column for column in required_columns if column not in reader.fieldnames]
+        if reader.fieldnames is None:
+            raise ValueError("CSV file appears to be empty or has no header row.")
+
+        missing_columns = [
+            column for column in required_columns if column not in reader.fieldnames
+        ]
         if missing_columns:
             raise ValueError(
                 f"CSV file must contain the following columns: {', '.join(required_columns)}. "
@@ -263,23 +295,25 @@ def parse_node_ids_and_cfs(path: str | Path) -> list[tuple[int, float]]:
         first_row = next(reader, None)
         if first_row is None:
             raise ValueError("CSV file is empty (no data rows).")
-        
+
         database_name = first_row.get("new_database", "").strip()
         if not database_name:
             raise ValueError("Database name is missing in the 'new_database' column.")
-        
+
         # Process first row
         cf = _parse_cf(first_row.get("cf"), line_number=2)
         flow_name = first_row.get("flow_name", "").strip()
         code_raw = first_row.get("code", "").strip()
         code = code_raw if code_raw else _sanitize_code(flow_name)
-        
+
         # Get the target node using name and code
         node = bd.get_node(name=flow_name, code=code)
         node_cf_tuples.append((node.id, cf))
 
         # Process remaining rows
-        for row_index, row in enumerate(reader, start=3):  # start at 3 (header + first row)
+        for row_index, row in enumerate(
+            reader, start=3
+        ):  # start at 3 (header + first row)
             # Verify database name is consistent
             row_database = row.get("new_database", "").strip()
             if row_database != database_name:
@@ -287,18 +321,17 @@ def parse_node_ids_and_cfs(path: str | Path) -> list[tuple[int, float]]:
                     f"Row {row_index}: Database name mismatch. Expected '{database_name}', "
                     f"found '{row_database}'. All rows must use the same database."
                 )
-            
+
             cf = _parse_cf(row.get("cf"), line_number=row_index)
-            
+
             flow_name = row.get("flow_name", "").strip()
             code_raw = row.get("code", "").strip()
             code = code_raw if code_raw else _sanitize_code(flow_name)
 
             # Get the target node using name and code
             node = bd.get_node(name=flow_name, code=code)
-            
+
             # Create tuple with node.id and cf value
             node_cf_tuples.append((node.id, cf))
 
     return node_cf_tuples
-

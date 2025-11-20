@@ -1,12 +1,12 @@
-new_database,flow_name,code,unit,CAS number,categories,cf
-additional_chemical_flows,Acetaminophen,acetaminophen,kg,103-90-2,water::surface water::freshwater,1.23E-05
-additional_chemical_flows,Ibuprofen,,kg,15687-27-1,water::surface water::freshwater,2.45E-06
-additional_chemical_flows,Aspirin,aspirin,kg,50-78-2,water::groundwater,3.67E-07
-additional_chemical_flows,Metformin,,kg,657-24-9,water::surface water::freshwater,4.89E-06
-additional_chemical_flows,Amoxicillin,amoxicillin,kg,26787-78-0,water::surface water::freshwater,5.12E-05
-additional_chemical_flows,Ciprofloxacin,,kg,85721-33-1,water::surface water::freshwater,6.34E-04
-additional_chemical_flows,Atorvastatin,atorvastatin,kg,134523-00-5,water::surface water::freshwater,7.56E-07
-additional_chemical_flows,Lisinopril,,kg,76547-98-3,water::groundwater,8.78E-08
-additional_chemical_flows,Omeprazole,omeprazole,kg,73590-58-6,water::surface water::freshwater,9.10E-06
-additional_chemical_flows,Warfarin,,kg,81-81-2,water::surface water::freshwater,1.11E-05
+new_database,flow_name,code,unit,CAS number,categories,type,cf
+additional_chemical_flows,Acetaminophen,acetaminophen,kg,103-90-2,water::surface water::freshwater,emission,1.23E-05
+additional_chemical_flows,Ibuprofen,,kg,15687-27-1,water::surface water::freshwater,emission,2.45E-06
+additional_chemical_flows,Aspirin,aspirin,kg,50-78-2,water::groundwater,emission,3.67E-07
+additional_chemical_flows,Metformin,,kg,657-24-9,water::surface water::freshwater,emission,4.89E-06
+additional_chemical_flows,Amoxicillin,amoxicillin,kg,26787-78-0,water::surface water::freshwater,emission,5.12E-05
+additional_chemical_flows,Ciprofloxacin,,kg,85721-33-1,water::surface water::freshwater,emission,6.34E-04
+additional_chemical_flows,Atorvastatin,atorvastatin,kg,134523-00-5,water::surface water::freshwater,emission,7.56E-07
+additional_chemical_flows,Lisinopril,,kg,76547-98-3,water::groundwater,emission,8.78E-08
+additional_chemical_flows,Omeprazole,omeprazole,kg,73590-58-6,water::surface water::freshwater,emission,9.10E-06
+additional_chemical_flows,Warfarin,,kg,81-81-2,water::surface water::freshwater,emission,1.11E-05
 
